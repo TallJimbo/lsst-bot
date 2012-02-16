@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import bot.commands
+import sys
+
+bot.commands.main(sys.argv[1:])

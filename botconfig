@@ -1,0 +1,69 @@
+# -*- python -*-
+
+import os
+import logging
+
+# Root URL for git; expect to be able to clone {git.url.root}/{package} and get a repo names {package}
+git.url.root = os.environ["LSST_DMS"]
+
+# Override git URLs for specific packages.  {root} and {pkg} are substituted with git.url.root and the
+# package name, respectively.
+git.url.overrides = {"sconsUtils": "{root}/devenv/{pkg}"}
+
+# When running git, redirect stderr to /dev/null.
+git.quiet = True
+
+# When running git, log (at DEBUG level) the commands we run.
+git.echo = False
+
+# Packages to ignore when we find them in the dependency tree.  This keeps us from trying to 
+# clone git repos for them.
+packages.external = ["toolchain", "boost", "scons", "doxygen", "python", "numpy", 
+                     "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib",
+                     "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
+                     "afwdata"]
+
+# Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
+# These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
+packages.refs.default = ["master"]
+
+# Dict of {package: ref} overrides specifying git refs for specific packages.
+packages.refs.overrides = {}
+
+# Top level package whose dependencies we'll manage; usually overridden in subdirectories.
+packages.top = ["afw"]
+
+# Extra eups tags to apply to in-place setups; these must already be enabled (in startup.py or elsewhere).
+eups.tags = []
+
+# Name of repo set for various EUPS things (usually expanded into version numbers and metapackage name).
+eups.name = "bot"  # almost always overridden in subdirectories
+
+# Passed to Eups constructor to turn off warnings (EUPS doesn't always obey).
+eups.quiet = True
+
+# Callable used to set the EUPS version number for in-place package declarations.
+# It will be passed two arguments: 'ref' is the git ref used to checkout the package, and
+# 'eups' is the eups config category.
+def eups_version_func(ref, eups):
+    parts = ref.split("/")
+    if parts[0] == "tickets":
+        return "ticket{0}_{1}".format(parts[1], eups.name)
+    else:
+        return "{0}_{1}".format(ref, eups.name)
+        
+eups.version = eups_version_func
+
+# EUPS metapackage name.  {eups} will be expanded to the eups config category, but
+# substituting eups.name into the metapackage name is discouraged because it allows
+# multiple metapackages to be setup at once.
+eups.meta = "meta"
+
+# If True, redirect scons stderr to /dev/null.
+scons.quiet = False
+
+# If True, log (at DEBUG level) the scons commands we run.
+scons.echo = False
+
+# Setup the basic logger.
+logging.basicConfig(level=logging.INFO)
