@@ -133,7 +133,7 @@ class RepoSet(object):
                 continue
             # checkout the desired ref in the repo, falling back to defaults as necessary
             ref = self._checkout_ref(pkg)
-            self.versions[pkg] = self.config.eups.version(ref, self.config.eups)
+            self.versions[pkg] = self.config.eups.version(ref=ref, eups=self.config.eups)
             # lookup dependencies by reading the table file we just checked out
             pkg_deps = dependencies.setdefault(pkg, set()) # each value is a set of nonrecursive deps
             for dependency, optional in eups.get_dependencies(self.config, self.path(pkg), 
@@ -212,7 +212,7 @@ class RepoSet(object):
                 if not dependencies:
                     break
             else:
-                raise ValueError("Circular dependency detected.")
+                raise ValueError("Circular dependency detected: {0}".format(todo))
             finished.add(name)
             result.append(name)
             todo.remove(name)
