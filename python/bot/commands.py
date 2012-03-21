@@ -91,6 +91,27 @@ class BuildCommand(Command):
         self.repos.read_list()
         self.repos.build(*args.scons_args)
 
+class GitCommand(Command):
+    """Run a git command on all (non-manual) managed packages.
+
+    The special string {pkg} in the additional arguments to git will
+    be replaced with the package name.
+    """
+
+    name = "git"
+
+    def setup(self, parser):
+        parser.add_argument("path", metavar="PATH", type=str,
+                            help="directory that contains managed repositories.  "
+                            "This is mandatory to distinguish it from git arguments.")
+        parser.add_argument("git_args", metavar="GIT_ARGS", nargs=argparse.REMAINDER, 
+                            help="additional arguments and options will be passed to git")
+
+    def run(self, args):
+        Command.run(self, args)
+        self.repos.read_list()
+        self.repos.run_git(*args.git_args)
+
 class SimpleCommand(Command):
 
     def setup(self, parser):
@@ -103,7 +124,7 @@ class SimpleCommand(Command):
         self.repos.read_list()
         getattr(self.repos, self.name)()
 
-commands = [InitCommand(), SyncCommand(), BuildCommand()]
+commands = [InitCommand(), SyncCommand(), BuildCommand(), GitCommand()]
 
 def addSimpleCommand(name):
     cmd = type(name, (SimpleCommand,), {"name": name, "__doc__": getattr(repo.RepoSet, name).__doc__})

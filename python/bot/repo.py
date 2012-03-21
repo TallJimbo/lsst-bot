@@ -83,6 +83,18 @@ class RepoSet(object):
             logging.info("Building '{pkg}'...".format(pkg=pkg))
             scons.run(self.config, self.path(pkg), *args)
 
+    def run_git(self, *args):
+        """Run the same git command on each package, excluding 'manual' packages.
+        """
+        assert(self.packages is not None)
+        for pkg in self.packages:
+            if pkg in self.config.packages.manual:
+                logging.info("Skipping manual package '{pkg}'...".format(pkg=pkg))
+            else:
+                logging.info("Processing '{pkg}'...".format(pkg=pkg))
+                expanded = [arg.format(pkg=pkg) for arg in args]
+                git.run(self.config, self.path(pkg), *expanded)
+
     def read_list(self):
         """Read the package list file into the RepoSet object to allow other operations
         to be performed without a sync.
@@ -107,7 +119,7 @@ class RepoSet(object):
         branches/tags we need before trying to check them out (only applies when
         an existing repo is found).
         """
-        ignore = set(self.config.packages.external)
+        allExternal = set(self.config.packages.external)
         if isinstance(self.config.packages.top, basestring):
             todo = [self.config.packages.top]
         else:
@@ -123,16 +135,30 @@ class RepoSet(object):
                 continue
             done.add(pkg)
             # clone or fetch the git repo as needed
-            if not self._ensure_repo(pkg, fetch):
-                if pkg in dependencies:
-                    del dependencies[pkg]
-                for deps in dependencies.itervalues():
-                    deps.discard(pkg)
-                ignore.add(pkg)
-                external.add(pkg)
-                continue
-            # checkout the desired ref in the repo, falling back to defaults as necessary
-            ref = self._checkout_ref(pkg)
+            if pkg in self.config.packages.manual:
+                if os.path.exists(self.path(pkg)):
+                    ref = "manual"
+                    logging.info("Using manual source for '{pkg}'.".format(pkg=pkg))
+                else:
+                    logging.info("Manual package '{0}' not found; treating as external.".format(pkg))
+                    if pkg in dependencies:
+                        del dependencies[pkg]
+                    for deps in dependencies.itervalues():
+                        deps.discard(pkg)
+                    allExternal.add(pkg)
+                    external.add(pkg)
+                    continue
+            else:
+                if not self._ensure_repo(pkg, fetch):
+                    if pkg in dependencies:
+                        del dependencies[pkg]
+                    for deps in dependencies.itervalues():
+                        deps.discard(pkg)
+                    allExternal.add(pkg)
+                    external.add(pkg)
+                    continue
+                # checkout the desired ref in the repo, falling back to defaults as necessary
+                ref = self._checkout_ref(pkg)
             self.versions[pkg] = self.config.eups.version(ref=ref, eups=self.config.eups)
             # lookup dependencies by reading the table file we just checked out
             pkg_deps = dependencies.setdefault(pkg, set()) # each value is a set of nonrecursive deps
@@ -140,8 +166,10 @@ class RepoSet(object):
                                                               pkg, recursive=False):
                 if not optional:
                     required.add(dependency)
-                if dependency in ignore:
+                if dependency in allExternal:
                     external.add(dependency)
+                    continue
+                if dependency in self.config.packages.ignore:
                     continue
                 pkg_deps.add(dependency)
                 if dependency not in done:
@@ -170,7 +198,7 @@ class RepoSet(object):
             try:
                 git.run(self.config, self.config.path, "clone", git_url)
             except git.Error:
-                logging.info("Git repo at '{0}' not found; ignoring.".format(git_url))
+                logging.info("Git repo at '{0}' not found; treating as external.".format(git_url))
                 return False
         return True
 
@@ -209,10 +237,12 @@ class RepoSet(object):
             for name in todo:
                 dependencies = data[name]
                 dependencies -= finished
+                logging.debug("Updating dependencies for '{0}': {1}".format(name, dependencies))
                 if not dependencies:
                     break
             else:
                 raise ValueError("Circular dependency detected: {0}".format(todo))
+            logging.debug("Finished all dependencies for '{0}'".format(name))
             finished.add(name)
             result.append(name)
             todo.remove(name)

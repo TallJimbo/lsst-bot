@@ -16,12 +16,23 @@ git.quiet = True
 # When running git, log (at DEBUG level) the commands we run.
 git.echo = False
 
-# Packages to ignore when we find them in the dependency tree.  This keeps us from trying to 
-# clone git repos for them.
-packages.external = ["toolchain", "boost", "scons", "doxygen", "python", "numpy", 
-                     "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib",
+# Packages to ignore entirely when we find them in the dependency tree.
+# We won't try to check these out or include them as depenencies of the metapackage.
+packages.ignore = ["toolchain", "implicitProducts"]
+
+# Packages where we just want to use a version already declared to EUPS, with versions
+# determined by the regular EUPS VRO when the metapackage is setup.
+# This will be included as regular (nonexact and recursive) dependencies of the metapackage.
+packages.external = ["boost", "scons", "doxygen", "python", "numpy", "mysqlpython", "activemqcpp",
+                     "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
                      "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
-                     "afwdata"]
+                     "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2"]
+
+# Packages whose source directories are manually created and managed by the user; they
+# will not be assumed to be git working copies (and may be symlinks), but will be included
+# in the EUPS metapackage just like git packages are.
+# If a manual package is not present when 'sync' is run, the package will be treated
+packages.manual = ["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip"]
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
@@ -33,7 +44,7 @@ packages.refs.overrides = {}
 # Top level package whose dependencies we'll manage; usually overridden in subdirectories.
 packages.top = ["afw"]
 
-# Extra eups tags to apply to in-place setups; these must already be enabled (in startup.py or elsewhere).
+# Extra EUPS tags to apply to in-place setups; these must already be enabled (in startup.py or elsewhere).
 eups.tags = []
 
 # Name of repo set for various EUPS things (usually expanded into version numbers and metapackage name).
