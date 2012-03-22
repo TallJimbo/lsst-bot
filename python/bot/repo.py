@@ -66,8 +66,11 @@ class RepoSet(object):
         """Pull the latest changes into the managed git repositories."""
         assert(self.packages is not None)
         for pkg in self.packages:
-            logging.info("Pulling changes for '{pkg}'.".format(pkg=pkg))
-            git.run(self.config, self.path(pkg), "pull")
+            if pkg in self.config.packages.manual:
+                logging.info("Skipping manual package '{pkg}'...".format(pkg=pkg))
+            else:
+                logging.info("Pulling changes for '{pkg}'.".format(pkg=pkg))
+                git.run(self.config, self.path(pkg), "pull")
 
     def list(self):
         """List all managed packages in dependency order."""
