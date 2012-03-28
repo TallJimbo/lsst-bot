@@ -17,7 +17,7 @@ git.quiet = True
 git.echo = False
 
 # Packages to ignore entirely when we find them in the dependency tree.
-# We won't try to check these out or include them as depenencies of the metapackage.
+# We won't try to check these out or include them as dependencies of the metapackage.
 packages.ignore = ["toolchain", "implicitProducts"]
 
 # Packages where we just want to use a version already declared to EUPS, with versions
@@ -39,7 +39,7 @@ packages.manual = ["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip"
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
-# Note that for this to work well, you'll need a new enough git that 'git checkout' is capable
+# Note that for this to work well, you'll need a new-enough git that 'git checkout' is capable
 # of automatically creating a tracking branch.
 packages.refs.default = ["master"]
 
