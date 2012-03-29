@@ -16,6 +16,19 @@ git.quiet = True
 # When running git, log (at DEBUG level) the commands we run.
 git.echo = False
 
+# Instead of cloning from the server, use the git-new-workdir command to create repos from an
+# existing bot stack that share everything (via symlinks) but the checked-out branch.
+# This parameter should be the path to the master repo, either relative to the cloned stack
+# or absolute.  If None, repos will be cloned from the remote repository.
+# If this parameter is not None and a repo cannot be found in the base stack, it will also
+# be cloned from the remote repository.
+git.link.base = None
+
+# Path to the git-new-workdir command (this is included with git in a contrib directory, but
+# it is usually not installed into $PATH, and sometimes isn't marked as executable).
+# The default is where it can be found on Ubuntu.
+git.link.cmd = "/usr/share/doc/git-core/contrib/workdir/git-new-workdir"
+
 # Packages to ignore entirely when we find them in the dependency tree.
 # We won't try to check these out or include them as dependencies of the metapackage.
 packages.ignore = ["toolchain", "implicitProducts"]

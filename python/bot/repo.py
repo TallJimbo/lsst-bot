@@ -203,6 +203,11 @@ class RepoSet(object):
                 logging.info("Fetching (but not merging) '{pkg}'.".format(pkg=pkg))
                 git.run(self.config, self.path(pkg), "fetch")
         else:
+            if self.config.git.link.base is not None:
+                base_path = os.path.join(self.config.path, self.config.git.link.base, pkg)
+                if os.path.exists(base_path):
+                    git.link(self.config, base_path, self.path(pkg))
+                    return True
             logging.info("Cloning '{pkg}'.".format(pkg=pkg))
             git_url = git.get_url(self.config, pkg)
             try:
