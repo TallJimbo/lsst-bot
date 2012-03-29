@@ -74,13 +74,7 @@ eups.quiet = True
 # Callable used to set the EUPS version number for in-place package declarations.
 # It will be passed two arguments: 'ref' is the git ref used to checkout the package, and
 # 'eups' is the eups config category.
-def eups_version_func(ref, eups):
-    parts = ref.split("/")
-    if parts[0] == "tickets":
-        return "ticket{0}_{1}".format(parts[1], eups.name)
-    else:
-        return "{0}_{1}".format(ref, eups.name)
-eups.version = eups_version_func
+eups.version = lambda ref, eups: eups.name
 
 # EUPS metapackage name.  {eups} will be expanded to the eups config category, but
 # substituting eups.name into the metapackage name is discouraged because it allows
