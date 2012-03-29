@@ -101,6 +101,8 @@ class GitCommand(Command):
     name = "git"
 
     def setup(self, parser):
+        parser.add_argument("--ignore-failed", action="store_true", default=False,
+                            help="ignore repos where the command fails, and just move on")
         parser.add_argument("path", metavar="PATH", type=str,
                             help="directory that contains managed repositories.  "
                             "This is mandatory to distinguish it from git arguments.")
@@ -110,7 +112,7 @@ class GitCommand(Command):
     def run(self, args):
         Command.run(self, args)
         self.repos.read_list()
-        self.repos.run_git(*args.git_args)
+        self.repos.run_git(*args.git_args, ignore_failed=args.ignore_failed)
 
 class SimpleCommand(Command):
 

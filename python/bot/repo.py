@@ -86,9 +86,10 @@ class RepoSet(object):
             logging.info("Building '{pkg}'...".format(pkg=pkg))
             scons.run(self.config, self.path(pkg), *args)
 
-    def run_git(self, *args):
+    def run_git(self, *args, **kwargs):
         """Run the same git command on each package, excluding 'manual' packages.
         """
+        ignore_failed = kwargs.get("ignore_failed", False)
         assert(self.packages is not None)
         for pkg in self.packages:
             if pkg in self.config.packages.manual:
@@ -96,7 +97,13 @@ class RepoSet(object):
             else:
                 logging.info("Processing '{pkg}'...".format(pkg=pkg))
                 expanded = [arg.format(pkg=pkg) for arg in args]
-                git.run(self.config, self.path(pkg), *expanded)
+                try:
+                    git.run(self.config, self.path(pkg), *expanded)
+                except git.Error as err:
+                    if ignore_failed:
+                        logging.info("Failure on '{pkg}'; continuing...".format(pkg=pkg))
+                    else:
+                        raise err
 
     def read_list(self):
         """Read the package list file into the RepoSet object to allow other operations
