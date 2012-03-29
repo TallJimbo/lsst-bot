@@ -138,6 +138,7 @@ class RepoSet(object):
         required = set(todo)
         external = set()
         self.versions = {}
+        self.refs = {}
         dependencies = {}
         while todo:
             pkg = todo.pop(0)
@@ -145,30 +146,16 @@ class RepoSet(object):
                 continue
             done.add(pkg)
             # clone or fetch the git repo as needed
-            if pkg in self.config.packages.manual:
-                if os.path.exists(self.path(pkg)):
-                    ref = "manual"
-                    logging.info("Using manual source for '{pkg}'.".format(pkg=pkg))
-                else:
-                    logging.info("Manual package '{0}' not found; treating as external.".format(pkg))
-                    if pkg in dependencies:
-                        del dependencies[pkg]
-                    for deps in dependencies.itervalues():
-                        deps.discard(pkg)
-                    allExternal.add(pkg)
-                    external.add(pkg)
-                    continue
-            else:
-                if not self._ensure_repo(pkg, fetch):
-                    if pkg in dependencies:
-                        del dependencies[pkg]
-                    for deps in dependencies.itervalues():
-                        deps.discard(pkg)
-                    allExternal.add(pkg)
-                    external.add(pkg)
-                    continue
-                # checkout the desired ref in the repo, falling back to defaults as necessary
-                ref = self._checkout_ref(pkg)
+            if not self._ensure_repo(pkg, fetch):
+                if pkg in dependencies:
+                    del dependencies[pkg]
+                for deps in dependencies.itervalues():
+                    deps.discard(pkg)
+                allExternal.add(pkg)
+                external.add(pkg)
+                continue
+            # checkout the desired ref in the repo, falling back to defaults as necessary
+            ref = self._checkout_ref(pkg)
             self.versions[pkg] = self.config.eups.version(ref=ref, eups=self.config.eups)
             # lookup dependencies by reading the table file we just checked out
             pkg_deps = dependencies.setdefault(pkg, set()) # each value is a set of nonrecursive deps
@@ -200,9 +187,15 @@ class RepoSet(object):
         """
         if os.path.isdir(self.path(pkg)):
             if fetch:
-                logging.info("Fetching (but not merging) '{pkg}'.".format(pkg=pkg))
-                git.run(self.config, self.path(pkg), "fetch")
+                if self.config.packages.refs.overrides.get(pkg, False) is None:
+                    logging.info("Not fetching manual package '{pkg}'".format(pkg=pkg))
+                else:
+                    logging.info("Fetching (but not merging) '{pkg}'.".format(pkg=pkg))
+                    git.run(self.config, self.path(pkg), "fetch")
         else:
+            if self.config.packages.refs.overrides.get(pkg, False) is None:
+                logging.info("Unmanaged source for '{pkg}' not found; treating as external.".format(pkg=pkg))
+                return False
             if self.config.git.link.base is not None:
                 base_path = os.path.join(self.config.path, self.config.git.link.base, pkg)
                 if os.path.exists(base_path):
@@ -221,11 +214,11 @@ class RepoSet(object):
         """Worker function for sync - checks out the first available ref from config.packages.refs
         for a single package.
         """
-        ref = self.config.packages.refs.overrides.get(pkg, None)
-        if ref is not None:
+        ref = self.config.packages.refs.overrides.get(pkg, False)
+        if ref:
             logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
             git.run(self.config, self.path(pkg), "checkout", ref)
-        else:
+        elif ref is False:  # don't want to match 'ref is None' here
             for ref in self.config.packages.refs.default:
                 logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
                 try:

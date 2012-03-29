@@ -41,15 +41,6 @@ packages.external = ["boost", "scons", "doxygen", "python", "numpy", "mysqlpytho
                      "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
                      "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2"]
 
-# Packages whose source directories are manually created and managed by the user; they
-# will not be assumed to be git working copies (and may be symlinks), but will be included
-# in the EUPS metapackage just like git packages are.
-# If a manual package is not present when 'sync' is run, the package will be treated
-# as external packages.
-# The packages listed here as defaults are HSC packages in mercurial; their presence
-# here shouldn't mess up LSST people, and it may help HSC people.
-packages.manual = ["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip"]
-
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
 # Note that for this to work well, you'll need a new-enough git that 'git checkout' is capable
@@ -57,7 +48,13 @@ packages.manual = ["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip"
 packages.refs.default = ["master"]
 
 # Dict of {package: ref} overrides specifying git refs for specific packages.
-packages.refs.overrides = {}
+# If ref is None, the source directory for that pcakge will not be assumed to be a git working copiy,
+# but it will be included in the EUPS metapackage present when 'sync' is run.
+# The packages listed here as defaults are HSC packages in mercurial; their presence
+# here shouldn't mess up LSST people, and it may help HSC people.
+packages.refs.overrides = {
+    "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None
+    }
 
 # Top level package whose dependencies we'll manage; usually overridden in subdirectories.
 packages.top = ["afw"]
