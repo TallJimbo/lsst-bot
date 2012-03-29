@@ -12,7 +12,7 @@ class RepoSet(object):
     def __init__(self, config):
         self.config = config
         self.packages = None
-        self.versions = None
+        self.refs = None
         self.external = None
 
     def path(self, pkg):
@@ -21,7 +21,7 @@ class RepoSet(object):
     def write_table(self):
         """Write the EUPS table file for the metapackage."""
         assert(self.packages is not None)
-        assert(self.versions is not None)
+        assert(self.refs is not None)
         assert(self.external is not None)
         ups = os.path.join(self.config.path, "ups")
         if not os.path.exists(ups): os.makedirs(ups)
@@ -33,32 +33,33 @@ class RepoSet(object):
                 else:
                     file.write("setupOptional({pkg})\n".format(pkg=pkg))
             for pkg in self.packages:
-                file.write("setupRequired({pkg} -j {version})\n".format(pkg=pkg, version=self.versions[pkg]))
+                version = self.config.eups.version(ref=self.refs[pkg], eups=self.config.eups)
+                file.write("setupRequired({pkg} -j {version})\n".format(pkg=pkg, version=version))
 
     def write_list(self):
         """Write a text file containing a dependency sorted list with package name and version columns.
         """
         assert(self.packages is not None)
-        assert(self.versions is not None)
+        assert(self.refs is not None)
         with open(os.path.join(self.config.path, "packages"), "w") as file:
             for pkg in self.packages:
-                file.write("{pkg} {version}\n".format(pkg=pkg, version=self.versions[pkg]))
+                file.write("{pkg} {ref}\n".format(pkg=pkg, ref=self.refs[pkg]))
 
     def declare(self):
         """Declare all managed packages with EUPS."""
         assert(self.packages is not None)
-        assert(self.versions is not None)
+        assert(self.refs is not None)
         for pkg in self.packages:
-            version = self.versions[pkg]
+            version = self.config.eups.version(ref=self.refs[pkg], eups=self.config.eups)
             logging.info("Declaring {pkg} {version}.".format(pkg=pkg, version=version))
             eups.declare(self.config, self.path(pkg), pkg, version)
 
     def undeclare(self):
         """Undeclare all managed packages with EUPS."""
         assert(self.packages is not None)
-        assert(self.versions is not None)
+        assert(self.refs is not None)
         for pkg in self.packages:
-            version = self.versions[pkg]
+            version = self.config.eups.version(ref=self.refs[pkg], eups=self.config.eups)
             logging.info("Undeclaring {pkg} {version}.".format(pkg=pkg, version=version))
             eups.undeclare(self.config, pkg, version)
 
@@ -110,13 +111,13 @@ class RepoSet(object):
         to be performed without a sync.
         """
         self.packages = []
-        self.versions = {}
+        self.refs = {}
         try:
             with open(os.path.join(self.config.path, "packages"), "r") as file:
                 for line in file:
-                    pkg, version = line.split()
+                    pkg, ref = line.split()
                     self.packages.append(pkg)
-                    self.versions[pkg] = version
+                    self.refs[pkg] = ref
         except IOError as err:
             raise RuntimeError("packages file not found - repo set is not synced or path not given")
 
@@ -137,7 +138,6 @@ class RepoSet(object):
         done = set()
         required = set(todo)
         external = set()
-        self.versions = {}
         self.refs = {}
         dependencies = {}
         while todo:
@@ -156,7 +156,7 @@ class RepoSet(object):
                 continue
             # checkout the desired ref in the repo, falling back to defaults as necessary
             ref = self._checkout_ref(pkg)
-            self.versions[pkg] = self.config.eups.version(ref=ref, eups=self.config.eups)
+            self.refs[pkg] = ref
             # lookup dependencies by reading the table file we just checked out
             pkg_deps = dependencies.setdefault(pkg, set()) # each value is a set of nonrecursive deps
             for dependency, optional in eups.get_dependencies(self.config, self.path(pkg), 
