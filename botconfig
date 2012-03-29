@@ -65,7 +65,7 @@ packages.top = ["afw"]
 # Extra EUPS tags to apply to in-place setups; these must already be enabled (in startup.py or elsewhere).
 eups.tags = []
 
-# Name of repo set for various EUPS things (usually expanded into version numbers and metapackage name).
+# Name of repo set for various EUPS things (usually expanded into version 'numbers').
 eups.name = "bot"  # almost always overridden in subdirectories
 
 # Passed to Eups constructor to turn off warnings (EUPS doesn't always obey).
