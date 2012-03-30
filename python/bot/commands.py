@@ -73,13 +73,27 @@ class SyncCommand(Command):
         self.repos.sync(fetch=args.fetch, declare=args.declare, write_table=args.write_table,
                         write_list=args.write_list)
 
-class BuildCommand(Command):
+class BatchCommand(Command):
+    """Base class for commands that do things to each package in dependency order."""
+
+    def setup(self, parser):
+        parser.add_argument("--ignore-failed", action="store_true", default=False,
+                            help="ignore repos where the command fails, and just move on")
+        parser.add_argument("--inherited", action="store_true", default=False,
+                            help="also process packages inherited from another stack")
+
+    @staticmethod
+    def kw(args):
+        return dict((k, getattr(args, k)) for k in ("ignore_failed", "inherited"))
+
+class BuildCommand(BatchCommand):
     """Build all managed packages with scons.
     """
 
     name = "build"
 
     def setup(self, parser):
+        BatchCommand.setup(self, parser)
         parser.add_argument("path", metavar="PATH", type=str,
                             help="directory that contains managed repositories.  "
                             "This is mandatory to distinguish it from scons arguments.")
@@ -89,9 +103,9 @@ class BuildCommand(Command):
     def run(self, args):
         Command.run(self, args)
         self.repos.read_list()
-        self.repos.build(*args.scons_args)
+        self.repos.build(*args.scons_args, **self.kw(args))
 
-class GitCommand(Command):
+class GitCommand(BatchCommand):
     """Run a git command on all (non-manual) managed packages.
 
     The special string {pkg} in the additional arguments to git will
@@ -101,8 +115,7 @@ class GitCommand(Command):
     name = "git"
 
     def setup(self, parser):
-        parser.add_argument("--ignore-failed", action="store_true", default=False,
-                            help="ignore repos where the command fails, and just move on")
+        BatchCommand.setup(self, parser)
         parser.add_argument("path", metavar="PATH", type=str,
                             help="directory that contains managed repositories.  "
                             "This is mandatory to distinguish it from git arguments.")
@@ -112,7 +125,7 @@ class GitCommand(Command):
     def run(self, args):
         Command.run(self, args)
         self.repos.read_list()
-        self.repos.run_git(*args.git_args, ignore_failed=args.ignore_failed)
+        self.repos.run_git(*args.git_args, **self.kw(args))
 
 class SimpleCommand(Command):
 
@@ -133,14 +146,11 @@ def addSimpleCommand(name):
     commands.append(cmd())
 
 addSimpleCommand("list")
-addSimpleCommand("pull")
 addSimpleCommand("declare")
 addSimpleCommand("undeclare")
 
 def main(argv):
-    parser = argparse.ArgumentParser(
-        description="Manage a collection of LSST git repositories."
-        )
+    parser = argparse.ArgumentParser(description="Manage a collection of LSST git repositories.")
     parser.add_argument("--traceback", action="store_true", default=False,
                         help="show full exception traceback when errors occur")
     subparsers = parser.add_subparsers(title="subcommands",

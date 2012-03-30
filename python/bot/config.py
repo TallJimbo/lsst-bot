@@ -25,6 +25,9 @@ class AttributeDict(object):
             else:
                 output.append("{0}{1} = {2}".format(prefix, k, repr(v)))
 
+    def __nonzero__(self):
+        return not not self._dict
+
     def __repr__(self):
         output = []
         self._write(output, "")
@@ -45,7 +48,7 @@ def load(path=None, categories=None):
         categories = default_categories
     config = AttributeDict()
     config.path = path
-    context = {}
+    context = {"path": path}
     for category in categories:
         context[category] = config._dict.setdefault(category, AttributeDict())
     files = []

@@ -13,8 +13,8 @@ git.url.overrides = {"sconsUtils": "{root}/devenv/{pkg}"}
 # When running git, redirect stderr to /dev/null.
 git.quiet = True
 
-# When running git, log (at DEBUG level) the commands we run.
-git.echo = False
+# Logging level at which to echo the git the commands we run.
+git.echo = logging.INFO
 
 # Instead of cloning from the server, use the git-new-workdir command to create repos from an
 # existing bot stack that share everything (via symlinks) but the checked-out branch.
@@ -48,7 +48,7 @@ packages.external = ["boost", "scons", "doxygen", "python", "numpy", "mysqlpytho
 packages.refs.default = ["master"]
 
 # Dict of {package: ref} overrides specifying git refs for specific packages.
-# If ref is None, the source directory for that pcakge will not be assumed to be a git working copiy,
+# If ref is None, the source directory for that package will not be assumed to be a git working copiy,
 # but it will be included in the EUPS metapackage present when 'sync' is run.
 # The packages listed here as defaults are HSC packages in mercurial; their presence
 # here shouldn't mess up LSST people, and it may help HSC people.
@@ -56,14 +56,38 @@ packages.refs.overrides = {
     "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None
     }
 
-# Top level package whose dependencies we'll manage; usually overridden in subdirectories.
+#
+# A path to another bot stack whose packages we can build on top of.
+#
+# When a package's git ref is one of those in packages.inherit.refs, it is present in the base
+# stack at that ref, and this is also true for all its dependencies, we will use the version
+# from the base metapackage.  These inherited packages will never be redeclared, and most batch
+# operations like 'build' will skip them unless the '--inherited' option is used.
+# Inherited packages will be included in the packages file, with their refs in square brackets.
+#
+# Because bot generally needs to clone a repo to figure out what ref to use for a package,
+# we'll end up doing the clone and then deleting it unless the ref is in
+# packages.refs.overrides.  However, if git.link.base is set, the discarded clone is generally
+# very cheap, so it usually makes sense to set git.link.base and packages.inherit.base to the same
+# value.
+#
+# The path should either be absolute or relative to the stack root.
+packages.inherit.base = None
+
+# A list of git refs that indicate we should use the base stack instead (see packages.inherit.base).
+# This is ignored if packages.inherit.base is None, so it's safe to put 'master' here, since that's
+# what we'll usually want to delegate to a base stack.  Including 'None' in the list allows us
+# to inherit source directories that aren't git repos.
+packages.inherit.refs = set(['master', None])
+
+# Top level package whose dependencies we'll manage; usually overridden in stack directories.
 packages.top = ["afw"]
 
 # Extra EUPS tags to apply to in-place setups; these must already be enabled (in startup.py or elsewhere).
 eups.tags = []
 
 # Name of repo set for various EUPS things (usually expanded into version 'numbers').
-eups.name = "bot"  # almost always overridden in subdirectories
+eups.name = "bot"  # almost always overridden in stack directories
 
 # Passed to Eups constructor to turn off warnings (EUPS doesn't always obey).
 eups.quiet = True
@@ -75,14 +99,15 @@ eups.version = lambda ref, eups: eups.name
 
 # EUPS metapackage name.  {eups} will be expanded to the eups config category, but
 # substituting eups.name into the metapackage name is discouraged because it allows
-# multiple metapackages to be setup at once.
+# multiple metapackages to be setup at once, and that usually isn't a good idea (but
+# see packages.base.path for another way for metapackages to share things).
 eups.meta = "meta"
 
 # If True, redirect scons stderr to /dev/null.
 scons.quiet = False
 
-# If True, log (at DEBUG level) the scons commands we run.
-scons.echo = False
+# Logging level at which to echo the scons commands we run
+scons.echo = logging.INFO
 
 # Setup the basic logger.
 logging.basicConfig(level=logging.INFO)

@@ -15,11 +15,10 @@ def run(config, path, *args):
         else:
             scons_stderr = None
         scons_cmd = ("scons",) + args
-        if config.scons.echo:
-            logging.debug("Running '{0}'...".format(" ".join(scons_cmd)))
+        logging.log(config.scons.echo, "In {0}, running '{1}'...".format(path, " ".join(scons_cmd)))
         output = subprocess.check_output(scons_cmd, stderr=scons_stderr)
     except subprocess.CalledProcessError:
-        raise Error("'{0}' failed".format(" ".join(scons_cmd)))
+        raise Error("'{0}' in path '{1}' failed".format(" ".join(scons_cmd), path))
     finally:
         os.chdir(olddir)
     return output

@@ -18,8 +18,7 @@ def link(config, base_path, pkg_path):
         git_stderr = open("/dev/null", "w")
     else:
         git_stderr = None
-    if config.git.echo:
-        logging.debug("Running '{0}'...".format(" ".join(cmd)))
+    logging.log(config.git.echo, "Running '{0}'.".format(" ".join(cmd)))
     try:
         subprocess.check_output(cmd)
     except subprocess.CalledProcessError:
@@ -33,12 +32,11 @@ def run(config, path, *args):
     else:
         git_stderr = None
     git_cmd = ("git",) + args
-    if config.git.echo:
-        logging.debug("Running '{0}'...".format(" ".join(git_cmd)))
+    logging.log(config.git.echo, "In {0}, running '{1}'.".format(path, " ".join(git_cmd)))    
     try:
         output = subprocess.check_output(git_cmd, stderr=git_stderr)
     except subprocess.CalledProcessError:
-        raise Error("'{0}' failed".format(" ".join(git_cmd)))
+        raise Error("'{0}' in path '{1}' failed".format(" ".join(git_cmd), path))
     finally:
         os.chdir(olddir)
     return output
