@@ -1,6 +1,7 @@
 # -*- python -*-
 
 import os
+import sys
 import logging
 
 # Root URL for git; expect to be able to clone {git.url.root}/{package} and get a repo names {package}
@@ -10,8 +11,9 @@ git.url.root = os.environ["LSST_DMS"]
 # package name, respectively.
 git.url.overrides = {"sconsUtils": "{root}/devenv/{pkg}"}
 
-# When running git, redirect stderr to /dev/null.
-git.quiet = True
+# Redirect git output to these buffers
+git.stderr = sys.stderr
+git.stdout = open(os.path.join(path, "git.log"), "w")
 
 # Logging level at which to echo the git the commands we run.
 git.echo = logging.INFO
@@ -103,8 +105,9 @@ eups.version = lambda ref, eups: eups.name
 # see packages.base.path for another way for metapackages to share things).
 eups.meta = "meta"
 
-# If True, redirect scons stderr to /dev/null.
-scons.quiet = False
+# Redirect scons output to these buffers.
+scons.stderr = open(os.path.join(path, "scons.log"), "w")
+scons.stdout = scons.stderr
 
 # Logging level at which to echo the scons commands we run
 scons.echo = logging.INFO

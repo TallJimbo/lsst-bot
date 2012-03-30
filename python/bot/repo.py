@@ -6,6 +6,7 @@ from . import scons
 from . import config
 
 import os
+import sys
 import shutil
 import logging
 
@@ -90,7 +91,7 @@ class RepoSet(object):
                         ref = ref[1:-1]
                         self.inherited.add(pkg)
                     self.packages.append(pkg)
-                    self.refs[pkg] = ref
+                    self.refs[pkg] = None if ref == 'None' else ref
         except IOError as err:
             raise RuntimeError("packages file not found - repo set is not synced or path not given")
 
