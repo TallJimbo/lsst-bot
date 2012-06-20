@@ -41,7 +41,8 @@ packages.ignore = ["toolchain", "implicitProducts"]
 packages.external = ["boost", "scons", "doxygen", "python", "numpy", "mysqlpython", "activemqcpp",
                      "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
                      "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
-                     "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2"]
+                     "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2",
+                     "scipy"]
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
@@ -55,7 +56,8 @@ packages.refs.default = ["master"]
 # The packages listed here as defaults are HSC packages in mercurial; their presence
 # here shouldn't mess up LSST people, and it may help HSC people.
 packages.refs.overrides = {
-    "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None
+    "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None,
+    "hscPipeBase": None,
     }
 
 #
