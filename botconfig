@@ -29,7 +29,7 @@ git.link.base = None
 # Path to the git-new-workdir command (this is included with git in a contrib directory, but
 # it is usually not installed into $PATH, and sometimes isn't marked as executable).
 # The default is where it can be found on Ubuntu.
-git.link.cmd = "/usr/share/doc/git-core/contrib/workdir/git-new-workdir"
+git.link.cmd = "/home/jbosch/git-new-workdir"
 
 # Packages to ignore entirely when we find them in the dependency tree.
 # We won't try to check these out or include them as dependencies of the metapackage.
@@ -57,7 +57,7 @@ packages.refs.default = ["master"]
 # here shouldn't mess up LSST people, and it may help HSC people.
 packages.refs.overrides = {
     "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None,
-    "hscPipeBase": None,
+    "hscPipeBase": None, "meas_extensions_shapeMiyatake": None,
     }
 
 #
