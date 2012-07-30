@@ -31,3 +31,13 @@ def declare(config, path, pkg, version):
 def undeclare(config, pkg, version):
     e = eups.Eups()
     e.undeclare(productName=pkg, versionName=version)
+
+def setup(pkg, version, nodepend=False):
+    e = eups.Eups(max_depth=(0 if nodepend else -1))
+    e.setup(productName=pkg, versionName=version)
+
+def tag(pkg, version, tag):
+    e = eups.Eups()
+    logging.debug("Assigning tag {tag} to {pkg}.".format(pkg=pkg, tag=tag))
+    e.assignTag(tag, productName=pkg, versionName=version)
+    

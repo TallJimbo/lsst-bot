@@ -140,7 +140,7 @@ class RepoSet(object):
                     scons.run(self.config, self.path(pkg), *args)
                 except scons.Error as err:
                     if kw.get("ignore_failed"):
-                        logging.warning("Build for  '{pkg}' failed; continuing...".format(pkg=pkg))
+                        logging.warning("Build for '{pkg}' failed; continuing...".format(pkg=pkg))
                         continue
                     raise err
             else:
@@ -167,6 +167,33 @@ class RepoSet(object):
                         raise err
             else:
                 logging.info("Skipping inherited package '{pkg}'...".format(pkg=pkg))
+
+    def install(self, *args, **kw):
+        """Install and declare all managed packages with scons.  They must already be setup.
+        """
+        assert self.packages is not None
+        assert self.inherited is not None
+        to_tag = []
+        for pkg in self.packages:
+            if pkg not in self.inherited or kw.get("inherited"):
+                version = kw["version"].format(pkg=pkg)
+                full_args = args + ("install", "declare", "version=" + version)
+                logging.info("Installing '{pkg}'...".format(pkg=pkg))
+                try:
+                    scons.run(self.config, self.path(pkg), *full_args)
+                    eups.setup(pkg, version, nodepend=True)
+                    to_tag.append((pkg, version))
+                except scons.Error as err:
+                    if kw.get("ignore_failed"):
+                        logging.warning("Build for '{pkg}' failed; continuing...".format(pkg=pkg))
+                        continue
+                    raise err
+            else:
+                logging.warn("Skipping inherited package '{pkg}'...".format(pkg=pkg))
+        tag = kw.get("tag")
+        if tag:
+            for pkg, version in to_tag:
+                eups.tag(pkg, version, tag)
 
     def sync(self, fetch=False, declare=True, write_table=True, write_list=True):
         """Clone and/or checkout git repositories to match the package list defined

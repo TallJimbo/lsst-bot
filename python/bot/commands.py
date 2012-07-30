@@ -105,6 +105,36 @@ class BuildCommand(BatchCommand):
         self.repos.read_list()
         self.repos.build(*args.scons_args, **self.kw(args))
 
+class InstallCommand(BatchCommand):
+    """Install and declare all managed packages.
+    """
+
+    name = "install"
+
+    def setup(self, parser):
+        BatchCommand.setup(self, parser)
+        parser.add_argument("--tag", action="store", type=str, default=None, 
+                            help="EUPS tag for installed packages")
+        parser.add_argument("version", metavar="VERSION", type=str,
+                            help="EUPS version for installed packages (may contain {pkg} placeholder).")
+        parser.add_argument("path", metavar="PATH", type=str,
+                            help="directory that contains managed repositories.  "
+                            "This is mandatory to distinguish it from scons arguments.")
+        parser.add_argument("scons_args", metavar="SCONS_ARGS", nargs=argparse.REMAINDER, 
+                            help="additional arguments and options will be passed to scons")
+
+    def run(self, args):
+        Command.run(self, args)
+        self.repos.read_list()
+        self.repos.install(*args.scons_args, **self.kw(args))
+
+    @staticmethod
+    def kw(args):
+        d = BatchCommand.kw(args)
+        d["version"] = args.version
+        d["tag"] = args.tag
+        return d
+
 class GitCommand(BatchCommand):
     """Run a git command on all (non-manual) managed packages.
 
@@ -139,7 +169,7 @@ class SimpleCommand(Command):
         self.repos.read_list()
         getattr(self.repos, self.name)()
 
-commands = [InitCommand(), SyncCommand(), BuildCommand(), GitCommand()]
+commands = [InitCommand(), SyncCommand(), BuildCommand(), InstallCommand(), GitCommand()]
 
 def addSimpleCommand(name):
     cmd = type(name, (SimpleCommand,), {"name": name, "__doc__": getattr(repo.RepoSet, name).__doc__})
