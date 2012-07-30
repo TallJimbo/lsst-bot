@@ -57,7 +57,7 @@ packages.refs.default = ["master"]
 # here shouldn't mess up LSST people, and it may help HSC people.
 packages.refs.overrides = {
     "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None,
-    "hscPipeBase": None, "meas_extensions_shapeMiyatake": None,
+    "hscPipeBase": None, "meas_extensions_shapeMiyatake": None, "fitsthumb": None,
     }
 
 #
