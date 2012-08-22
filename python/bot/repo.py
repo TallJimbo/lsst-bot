@@ -151,7 +151,7 @@ class RepoSet(object):
         """Run the same git command on each package, excluding 'manual' and hg-controlled packages.
         """
         assert self.packages is not None
-        assert self.refs is not None        
+        assert self.refs is not None
         assert self.inherited is not None
         for pkg in self.packages:
             if self.refs[pkg] is None:
@@ -180,7 +180,7 @@ class RepoSet(object):
         for pkg in self.packages:
             if self.refs[pkg] is None:
                 logging.info("Skipping package '{pkg}' with ref==None...".format(pkg=pkg))
-            elif pkg in not self.config.hg.packages:
+            elif pkg not in self.config.hg.packages:
                 logging.info("Skipping git package '{pkg}'...".format(pkg=pkg))
             elif pkg not in self.inherited or kw.get("inherited"):
                 logging.info("Processing '{pkg}'...".format(pkg=pkg))
@@ -371,21 +371,26 @@ class RepoSet(object):
         if pkg in self.inherited:  # we already marked it provisionally inherited in _ensure_repo
             return ref
         if ref:
+            trueref = ref
             # let exceptions propagate up; we don't want to fall back if the ref is in overrides
-            if pkg in self.hg.packages:
+            if pkg in self.config.hg.packages:
                 hgref = self.config.hg.refs.replace.get(ref, ref)
-                logging.debug("Trying to checkout ref '{hgref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
-                hg.run(self.config, self.path(pkg), "update -c", ref)
+                logging.debug("Trying to checkout ref '{hgref}' for '{pkg}'.".format(hgref=hgref, pkg=pkg))
+                hg.run(self.config, self.path(pkg), "update", hgref)
+                trueref = hgref
             else:
                 logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
                 git.run(self.config, self.path(pkg), "checkout", ref)
         elif ref is False:  # don't want to match 'ref is None' here
             for ref in self.config.packages.refs.default:
-                if pkg in self.hg.packages:
+                trueref = ref
+                if pkg in self.config.hg.packages:
                     hgref = self.config.hg.refs.replace.get(ref, ref)
-                    logging.debug("Trying to checkout ref '{hgref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
+                    logging.debug("Trying to checkout ref '{hgref}' for '{pkg}'."
+                                  .format(hgref=hgref, pkg=pkg))
                     try:
-                        hg.run(self.config, self.path(pkg), "update -c", ref)
+                        hg.run(self.config, self.path(pkg), "update", hgref)
+                        trueref = hgref
                         break
                     except hg.Error:
                         pass
@@ -401,7 +406,7 @@ class RepoSet(object):
                     "Could not checkout any of ({refs}) for package '{pkg}'".format(
                         refs=", ".join(self.config.packages.refs.default), pkg=pkg)
                     )
-        logging.info("Using ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
+        logging.info("Using ref '{ref}' for '{pkg}'.".format(ref=trueref, pkg=pkg))
         if inherit and self.base is not None and ref in self.config.packages.inherit.refs:
             assert self.base.packages is not None
             assert self.base.refs is not None

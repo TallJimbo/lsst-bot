@@ -31,8 +31,8 @@ git.link.base = None
 # The default is where it can be found on Ubuntu.
 git.link.cmd = "/home/jbosch/git-new-workdir"
 
-# Root URL for hg; expect to be able to clone {hg.url.root}//{package} and get a repo named {package}
-hg.url.root = "ssh://hsc-gw2.mtk.nao.ac.jp"
+# Root URL for hg; expect to be able to clone {hg.url.root}/{package} and get a repo named {package}
+hg.url.root = "ssh://mitaka//ana/hgrepo"
 
 # Override hg URLs for specific packages.  {root} and {pkg} are substituted with hg.url.root and the
 # package name, respectively.
@@ -63,7 +63,7 @@ packages.external = set(["boost", "scons", "doxygen", "python", "numpy", "mysqlp
                          "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
                          "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
                          "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2",
-                         "scipy"])
+                         "scipy", "libpng", "libjpeg"])
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
@@ -134,4 +134,4 @@ scons.stdout = scons.stderr
 scons.echo = logging.INFO
 
 # Setup the basic logger.
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)

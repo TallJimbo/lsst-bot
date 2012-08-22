@@ -9,7 +9,7 @@ class Error(RuntimeError): pass
 def get_url(config, pkg):
     tmpl = config.hg.url.overrides.get(pkg, None)
     if tmpl is None:
-        tmpl = "{root}//{pkg}"
+        tmpl = "{root}/{pkg}"
     return tmpl.format(root=config.hg.url.root, pkg=pkg)
 
 def run(config, path, *args):
