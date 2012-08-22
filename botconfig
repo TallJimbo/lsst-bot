@@ -4,7 +4,7 @@ import os
 import sys
 import logging
 
-# Root URL for git; expect to be able to clone {git.url.root}/{package} and get a repo names {package}
+# Root URL for git; expect to be able to clone {git.url.root}/{package} and get a repo named {package}
 git.url.root = os.environ["LSST_DMS"]
 
 # Override git URLs for specific packages.  {root} and {pkg} are substituted with git.url.root and the
@@ -31,18 +31,39 @@ git.link.base = None
 # The default is where it can be found on Ubuntu.
 git.link.cmd = "/home/jbosch/git-new-workdir"
 
+# Root URL for hg; expect to be able to clone {hg.url.root}//{package} and get a repo named {package}
+hg.url.root = "ssh://hsc-gw2.mtk.nao.ac.jp"
+
+# Override hg URLs for specific packages.  {root} and {pkg} are substituted with hg.url.root and the
+# package name, respectively.
+hg.url.overrides = {}
+
+# Redirect hg output to these buffers
+hg.stderr = sys.stderr
+hg.stdout = open(os.path.join(path, "hg.log"), "w")
+
+# Logging level at which to echo the hg the commands we run.
+hg.echo = logging.INFO
+
+# Replacement dictionary that maps git refs to hg refs.
+hg.refs.replace = {"master": "default"}
+
+# Packages that use hg instead of git.
+hg.packages = set(["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip",
+                   "hscPipeBase", "meas_extensions_shapeMiyatake", "fitsthumb"])
+
 # Packages to ignore entirely when we find them in the dependency tree.
 # We won't try to check these out or include them as dependencies of the metapackage.
-packages.ignore = ["toolchain", "implicitProducts"]
+packages.ignore = set(["toolchain", "implicitProducts"])
 
 # Packages where we just want to use a version already declared to EUPS, with versions
 # determined by the regular EUPS VRO when the metapackage is setup.
 # This will be included as regular (nonexact and recursive) dependencies of the metapackage.
-packages.external = ["boost", "scons", "doxygen", "python", "numpy", "mysqlpython", "activemqcpp",
-                     "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
-                     "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
-                     "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2",
-                     "scipy"]
+packages.external = set(["boost", "scons", "doxygen", "python", "numpy", "mysqlpython", "activemqcpp",
+                         "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
+                         "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
+                         "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2",
+                         "scipy"])
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
@@ -53,12 +74,10 @@ packages.refs.default = ["master"]
 # Dict of {package: ref} overrides specifying git refs for specific packages.
 # If ref is None, the source directory for that package will not be assumed to be a git working copiy,
 # but it will be included in the EUPS metapackage present when 'sync' is run.
-# The packages listed here as defaults are HSC packages in mercurial; their presence
-# here shouldn't mess up LSST people, and it may help HSC people.
-packages.refs.overrides = {
-    "hscAstrom": None, "distEst": None, "hscPipe": None, "hscMosaic": None, "solvetansip": None,
-    "hscPipeBase": None, "meas_extensions_shapeMiyatake": None, "fitsthumb": None,
-    }
+packages.refs.overrides = {}
+
+# A synonym for 'hg.packages'.
+packages.hg = hg.packages
 
 #
 # A path to another bot stack whose packages we can build on top of.

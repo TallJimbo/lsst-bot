@@ -35,7 +35,7 @@ class AttributeDict(object):
 
     __str__ = __repr__
 
-default_categories = ["git", "packages", "eups", "scons"]
+default_categories = ["git", "hg", "packages", "eups", "scons"]
 
 def load(path=None, categories=None):
     if path is None:
