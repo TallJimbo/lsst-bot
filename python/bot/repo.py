@@ -102,10 +102,11 @@ class RepoSet(object):
         assert self.refs is not None
         assert self.inherited is not None
         for pkg in self.packages:
+            version = self.version(pkg)
             if pkg in self.inherited:
-                logging.info("Skipping inherited package '{pkg}'.".format(pkg=pkg))
+                logging.info("Assigning tags for inherited package '{pkg}'.".format(pkg=pkg))
+                eups.declare(self.config, self.path(pkg), pkg, version, tag_only=True)
             else:
-                version = self.version(pkg)
                 logging.info("Declaring {pkg} {version}.".format(pkg=pkg, version=version))
                 eups.declare(self.config, self.path(pkg), pkg, version)
 

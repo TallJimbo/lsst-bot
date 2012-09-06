@@ -19,10 +19,11 @@ def get_dependencies(config, path, pkg, recursive=False):
     for product, optional, depth in dependencies:
         yield product.name, optional
 
-def declare(config, path, pkg, version):
+def declare(config, path, pkg, version, tag_only=False):
     e = eups.Eups()
-    logging.debug("Declaring {pkg} {version}.".format(pkg=pkg, version=version))
-    e.declare(productName=pkg, versionName=version, productDir=path)
+    if not tag_only:
+        logging.debug("Declaring {pkg} {version}.".format(pkg=pkg, version=version))
+        e.declare(productName=pkg, versionName=version, productDir=path)
     for tmp in config.eups.tags:
         tag = tmp.format(eups=config.eups)
         logging.debug("Assigning tag {tag} to {pkg}.".format(pkg=pkg, tag=tag))
