@@ -5,7 +5,7 @@ import sys
 import logging
 
 # Root URL for git; expect to be able to clone {git.url.root}/{package} and get a repo named {package}
-git.url.root = os.environ["LSST_DMS"]
+git.url.root = os.environ.get("LSST_DMS", None)
 
 # Override git URLs for specific packages.  {root} and {pkg} are substituted with git.url.root and the
 # package name, respectively.
@@ -63,7 +63,7 @@ packages.external = set(["boost", "scons", "doxygen", "python", "numpy", "mysqlp
                          "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
                          "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
                          "afwdata", "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2",
-                         "scipy", "libpng", "libjpeg"])
+                         "scipy", "libpng", "libjpeg", "psycopg2", "pg8000"])
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
