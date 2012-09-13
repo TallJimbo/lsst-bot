@@ -26,7 +26,8 @@ class RepoSet(object):
             try:
                 self.base.read_list()
             except RuntimeError:
-                raise RuntimeError("Please run 'bot sync' on the base repo at '{path}'".format(base_path))
+                raise RuntimeError("Please run 'bot sync' on the base repo at '{path}'"
+                                   .format(path=base_path))
         else:
             self.base = None
 
