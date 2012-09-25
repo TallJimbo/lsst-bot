@@ -164,20 +164,20 @@ class HgCommand(BatchCommand):
     be replaced with the package name.
     """
 
-    name = "git"
+    name = "hg"
 
     def setup(self, parser):
         BatchCommand.setup(self, parser)
         parser.add_argument("path", metavar="PATH", type=str,
                             help="directory that contains managed repositories.  "
-                            "This is mandatory to distinguish it from git arguments.")
+                            "This is mandatory to distinguish it from hg arguments.")
         parser.add_argument("hg_args", metavar="HG_ARGS", nargs=argparse.REMAINDER, 
-                            help="additional arguments and options will be passed to git")
+                            help="additional arguments and options will be passed to hg")
 
     def run(self, args):
         Command.run(self, args)
         self.repos.read_list()
-        self.repos.run_git(*args.hg_args, **self.kw(args))
+        self.repos.run_hg(*args.hg_args, **self.kw(args))
 
 class SimpleCommand(Command):
 
