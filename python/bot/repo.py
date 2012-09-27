@@ -361,7 +361,7 @@ class RepoSet(object):
                     git.run(self.config, self.config.path, "clone", git_url)
                     new_clones.add(pkg)
                 except git.Error:
-                    logging.info("hg repo at '{0}' not found; treating as external.".format(git_url))
+                    logging.info("git repo at '{0}' not found; treating as external.".format(git_url))
                     return False
         return True
 
