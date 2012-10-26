@@ -62,8 +62,8 @@ packages.ignore = set(["toolchain", "implicitProducts"])
 packages.external = set(["boost", "scons", "doxygen", "python", "numpy", "mysqlpython", "activemqcpp",
                          "eigen", "cfitsio", "wcslib", "xpa", "swig", "mysqlclient", "matplotlib", "mkl",
                          "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
-                         "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2",
-                         "scipy", "libpng", "libjpeg", "psycopg2", "pg8000"])
+                         "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2", "scisql",
+                         "scipy", "libpng", "libjpeg", "psycopg2", "pg8000", "condor", "condor_glidein"])
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
