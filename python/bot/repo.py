@@ -156,13 +156,14 @@ class RepoSet(object):
         assert self.refs is not None
         assert self.inherited is not None
         for pkg in self.packages:
-            if self.refs[pkg] is None:
+            ref = self.refs[pkg]
+            if ref is None:
                 logging.info("Skipping package '{pkg}' with ref==None...".format(pkg=pkg))
             elif pkg in self.config.hg.packages:
                 logging.info("Skipping hg package '{pkg}'...".format(pkg=pkg))
             elif pkg not in self.inherited or kw.get("inherited"):
                 logging.info("Processing '{pkg}'...".format(pkg=pkg))
-                expanded = [arg.format(pkg=pkg) for arg in args]
+                expanded = [arg.format(pkg=pkg, ref=ref) for arg in args]
                 try:
                     git.run(self.config, self.path(pkg), *expanded)
                 except git.Error as err:
