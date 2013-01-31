@@ -15,6 +15,7 @@ class RepoSet(object):
 
     def __init__(self, cfg):
         self.config = cfg
+        hg.maybe_use_git(self.config)
         self.packages = None
         self.refs = None
         self.external = None

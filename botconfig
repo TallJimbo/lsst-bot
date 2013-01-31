@@ -52,6 +52,9 @@ hg.refs.replace = {"master": "default"}
 hg.packages = set(["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip",
                    "hscPipeBase", "meas_extensions_shapeMiyatake", "fitsthumb"])
 
+# Use git-remote-hg to manage hg packages instead of hg itself.
+hg.use_git = True
+
 # Packages to ignore entirely when we find them in the dependency tree.
 # We won't try to check these out or include them as dependencies of the metapackage.
 packages.ignore = set(["toolchain", "implicitProducts"])

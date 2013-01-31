@@ -23,3 +23,13 @@ def run(config, path, *args):
         raise Error("'{0}' in path '{1}' failed".format(" ".join(hg_cmd), path))
     finally:
         os.chdir(olddir)
+
+def maybe_use_git(config):
+    """Inspect 'config.hg.use_git', and if True, remove all packages from 'hg.packages'
+    and add corresponding hg:: URLs to "git.url.overrides" instead."""
+    if not config.hg.use_git:
+        return
+    while config.hg.packages:
+        pkg = config.hg.packages.pop()
+        url = get_url(config, pkg)
+        config.git.url.overrides[pkg] = "hg::" + url
