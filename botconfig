@@ -105,7 +105,7 @@ packages.inherit.base = None
 # This is ignored if packages.inherit.base is None, so it's safe to put 'master' here, since that's
 # what we'll usually want to delegate to a base stack.  Including 'None' in the list allows us
 # to inherit source directories that aren't git repos.
-packages.inherit.refs = set(['master', None])
+packages.inherit.refs = set(['master', 'next', None])
 
 # Top level package whose dependencies we'll manage; usually overridden in stack directories.
 packages.top = ["afw"]
