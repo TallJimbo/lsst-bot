@@ -226,7 +226,7 @@ class RepoSet(object):
             for pkg, version in to_tag:
                 eups.tag(pkg, version, tag)
 
-    def sync(self, fetch=False, declare=True, write_table=True, write_list=True):
+    def sync(self, fetch=False, declare=True, write_table=True, write_list=True, manual_are_new=False):
         """Clone and/or checkout git and/or hg repositories to match the package list defined
         by the configuration, and declare them to EUPS and write the
         EUPS metapackage table file.
@@ -234,6 +234,10 @@ class RepoSet(object):
         If fetch is True, run 'git fetch' or 'hg pull' on repos to ensure we have access to the
         branches/tags we need before trying to check them out (only applies when
         an existing repo is found).
+
+        If manual_are_new, git repos already found in the directory will be treated as if they were
+        just cloned: they will have their remotes updated, and may be deleted if it is determined
+        they can be inherited.
         """
         allExternal = set(self.config.packages.external)
         if isinstance(self.config.packages.top, basestring):
@@ -253,7 +257,7 @@ class RepoSet(object):
                 continue
             done.add(pkg)
             # clone or fetch the git/hg repo as needed
-            if not self._ensure_repo(pkg, fetch, new_clones):
+            if not self._ensure_repo(pkg, fetch, new_clones, manual_are_new=manual_are_new):
                 if pkg in dependencies:
                     del dependencies[pkg]
                 for deps in dependencies.itervalues():
@@ -294,7 +298,7 @@ class RepoSet(object):
         self.packages = self._make_sorted_list(dependencies)
         # go through all the packages, and add repos for things we thought we could inherit but can't
         for pkg in self.packages:
-            if not self._ensure_repo(pkg, False, new_clones, inherit=False):
+            if not self._ensure_repo(pkg, False, new_clones, inherit=False, manual_are_new=manual_are_new):
                 raise RuntimeError("Could not clone new repo for '{pkg}'".format(pkg))
             checked_out_ref = self._checkout_ref(pkg, inherit=False)
         # remove any new clones we are inheriting; note that we don't remove repos we didn't just make
@@ -303,6 +307,16 @@ class RepoSet(object):
                 logging.info("Pruning repo for inherited package '{pkg}'.".format(pkg=pkg))
                 # can't use self.path here, because that points to the inherited location
                 shutil.rmtree(os.path.join(self.config.path, pkg))
+        new_clones -= self.inherited
+        # add remotes in any new clones (including rename of origin)
+        for pkg in new_clones:
+            if pkg not in self.config.hg.packages:
+                logging.info("Adding remotes for '{pkg}'.".format(pkg=pkg))
+                for k, v in git.get_remotes(self.config, pkg).iteritems():
+                    if k == self.config.git.origin:
+                        git.run(self.config, self.path(pkg), "remote", "rename", "origin", k)
+                    else:
+                        git.run(self.config, self.path(pkg), "remote", "add", k, v)
         # make a dict of unmanaged packages, where value is True if it's required
         self.external = dict((pkg, pkg in required) for pkg in external)
         # other optional tasks
@@ -310,9 +324,9 @@ class RepoSet(object):
         if write_table: self.write_table()
         if write_list: self.write_list()
 
-    def _ensure_repo(self, pkg, fetch, new_clones, inherit=True):
+    def _ensure_repo(self, pkg, fetch, new_clones, inherit=True, manual_are_new=False):
         """Worker function for sync - clones a git/hg repo as needed and optionally fetches
-        new changes if one is already present.
+        new changes from the origin remote if one is already present.
         """
         if os.path.isdir(self.path(pkg)):
             if fetch:
@@ -324,7 +338,9 @@ class RepoSet(object):
                     hg.run(self.config, self.path(pkg), "pull")                    
                 else:
                     logging.info("Fetching (but not merging) from git '{pkg}'.".format(pkg=pkg))
-                    git.run(self.config, self.path(pkg), "fetch")
+                    git.run(self.config, self.path(pkg), "fetch " + self.config.remote.origin)
+            if manual_are_new:
+                new_clones.add(pkg)
         else:
             ref = self.config.packages.refs.overrides.get(pkg, False)
             if inherit and self.base is not None and ref in self.config.packages.inherit.refs:
@@ -343,7 +359,7 @@ class RepoSet(object):
                 return False
             if pkg in self.config.packages.hg:
                 logging.info("Cloning '{pkg}' with hg.".format(pkg=pkg))
-                hg_url = hg.get_url(self.config, pkg)
+                hg_url = hg.get_remotes(self.config, pkg)[self.config.hg.origin]
                 try:
                     hg.run(self.config, self.config.path, "clone", hg_url)
                     new_clones.add(pkg)
@@ -351,16 +367,18 @@ class RepoSet(object):
                     logging.info("hg repo at '{0}' not found; treating as external.".format(hg_url))
                     return False
             else:
-                if self.config.git.link.base is not None:
-                    base_path = os.path.join(self.config.path, self.config.git.link.base, pkg)
+                reference = None
+                if self.config.git.reference is not None:
+                    base_path = os.path.join(self.config.path, self.config.git.reference, pkg)
                     if os.path.exists(base_path):
-                        git.link(self.config, base_path, self.path(pkg))
-                        new_clones.add(pkg)
-                        return True
+                        reference = base_path
                 logging.info("Cloning '{pkg}' with git.".format(pkg=pkg))
-                git_url = git.get_url(self.config, pkg)
+                git_url = git.get_remotes(self.config, pkg)[self.config.git.origin]
                 try:
-                    git.run(self.config, self.config.path, "clone", git_url)
+                    if reference is None:
+                        git.run(self.config, self.config.path, "clone", git_url)
+                    else:
+                        git.run(self.config, self.config.path, "clone", "--reference", reference, git_url)
                     new_clones.add(pkg)
                 except git.Error:
                     logging.info("git repo at '{0}' not found; treating as external.".format(git_url))

@@ -3,6 +3,7 @@ from . import config
 
 import argparse
 import os
+import shutil
 
 class Command(object):
 
@@ -67,11 +68,13 @@ class SyncCommand(Command):
                             help="do not write the metapackage table file")
         parser.add_argument("--no-list", action="store_false", default=True, dest="write_list",
                             help="do not write the package list file")
+        parser.add_argument("--manual-are-new", action="store_true", default=False, dest="manual_are_new",
+                            help="treat existing repos as new: install remotes, remove if inherited")
 
     def run(self, args):
         Command.run(self, args)
         self.repos.sync(fetch=args.fetch, declare=args.declare, write_table=args.write_table,
-                        write_list=args.write_list)
+                        write_list=args.write_list, manual_are_new=args.manual_are_new)
 
 class BatchCommand(Command):
     """Base class for commands that do things to each package in dependency order."""
@@ -191,7 +194,31 @@ class SimpleCommand(Command):
         self.repos.read_list()
         getattr(self.repos, self.name)()
 
-commands = [InitCommand(), SyncCommand(), BuildCommand(), InstallCommand(), GitCommand(), HgCommand()]
+class CleanCommand(Command):
+    """Clean a repo by removing everything but the botconfig file.
+    """
+
+    name = "clean"
+
+    def setup(self, parser):
+        parser.add_argument("path", metavar="PATH", type=str, nargs='?',
+                            help="directory that contains managed repositories.")
+
+    def run(self, args):
+        if args.path is None:
+            raise RuntimeError("path argument is required for clean")
+        if not os.path.exists(os.path.join(args.path, "botconfig")):
+            raise RuntimeError("path does not contain a botconfig file")
+        for p1 in os.listdir(args.path):
+            if p1 != "botconfig":
+                p2 = os.path.join(args.path, p1)
+                if os.path.isdir(p2):
+                    shutil.rmtree(p2)
+                else:
+                    os.remove(p2)
+
+commands = [InitCommand(), SyncCommand(), BuildCommand(), InstallCommand(), GitCommand(), HgCommand(),
+            CleanCommand()]
 
 def addSimpleCommand(name):
     cmd = type(name, (SimpleCommand,), {"name": name, "__doc__": getattr(repo.RepoSet, name).__doc__})

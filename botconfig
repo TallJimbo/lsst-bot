@@ -4,12 +4,24 @@ import os
 import sys
 import logging
 
-# Root URL for git; expect to be able to clone {git.url.root}/{package} and get a repo named {package}
-git.url.root = os.environ.get("LSST_DMS", None)
+LSST_DMS = "git@git.lsstcorp.org:LSST/DMS/{pkg}.git"
+LSST_CONTRIB = "git@git.lsstcorp.org:contrib/{pkg}.git"
 
-# Override git URLs for specific packages.  {root} and {pkg} are substituted with git.url.root and the
-# package name, respectively.
-git.url.overrides = {"sconsUtils": "{root}/devenv/{pkg}"}
+HSC_GIT = "ssh://mitaka/ana/lsstrepo/{pkg}.git"
+HSC_HG = "ssh://mitaka//ana/hgrepo/{pkg}"
+
+# Package URL templates for git remotes
+git.url.remotes = {"NCSA": LSST_DMS, "mitaka": HSC_GIT}
+
+# Dictionary of per-package overrides; each value must either be a dict that overrides git.url.remotes
+# for that package, or a string that overrides {pkg} for that package when used in a git URL.
+git.url.overrides = {
+    "meas_mosaic": {"NCSA": LSST_CONTRIB, "mitaka": HSC_GIT},
+    "sconsUtils": "devenv/sconsUtils"
+}
+
+# Which remote to clone from (it will be renamed from 'origin' to the name used here)
+git.origin = "NCSA"
 
 # Redirect git output to these buffers
 git.stderr = sys.stderr
@@ -18,24 +30,21 @@ git.stdout = open(os.path.join(path, "git.log"), "w")
 # Logging level at which to echo the git the commands we run.
 git.echo = logging.INFO
 
-# Instead of cloning from the server, use the git-new-workdir command to create repos from an
-# existing bot stack that share everything (via symlinks) but the checked-out branch.
-# This parameter should be the path to the master repo, either relative to the cloned stack
-# or absolute.  If None, repos will be cloned from the remote repository.
-# If this parameter is not None and a repo cannot be found in the base stack, it will also
-# be cloned from the remote repository.
-git.link.base = None
+# Look for a git repo named {pkg} in the given directory in turn, and if found, pass it using the
+# --reference option to git clone (this allows cloning a remote repository while sharing data via
+# hardlinks with the reference clone).
+git.reference = None
 
-# Path to the git-new-workdir command (this is included with git in a contrib directory, but
-# it is usually not installed into $PATH, and sometimes isn't marked as executable).
-# The default is where it can be found on Ubuntu.
-git.link.cmd = "/home/jbosch/git-new-workdir"
+# Package URL templates for hg remotes ('remote' is the git term; hg calls them 'paths').
+hg.url.remotes = {"mitaka": HSC_HG}
 
-# Root URL for hg; expect to be able to clone {hg.url.root}/{package} and get a repo named {package}
-hg.url.root = "ssh://mitaka//ana/hgrepo"
+# Per-package overrides for hg paths.
+hg.url.overrides = {}
 
-# Override hg URLs for specific packages.  {root} and {pkg} are substituted with hg.url.root and the
-# package name, respectively.
+# Which hg remote to clone from.
+hg.origin = "mitaka"
+
+# Override hg URLs for specific packages.  See git.url.overrides for more information.
 hg.url.overrides = {}
 
 # Redirect hg output to these buffers

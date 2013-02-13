@@ -6,11 +6,12 @@ from .utils import echo
 
 class Error(RuntimeError): pass
 
-def get_url(config, pkg):
-    tmpl = config.hg.url.overrides.get(pkg, None)
-    if tmpl is None:
-        tmpl = "{root}/{pkg}"
-    return tmpl.format(root=config.hg.url.root, pkg=pkg)
+def get_remotes(config, pkg):
+    d = config.hg.url.overrides.get(pkg, config.hg.url.remotes)
+    if not isinstance(d, dict):
+        pkg = d
+        d = config.hg.url.remotes
+    return {k: v.format(pkg=pkg) for k,v in d.iteritems()}
 
 def run(config, path, *args):
     olddir = os.path.abspath(os.getcwd())
@@ -28,8 +29,10 @@ def maybe_use_git(config):
     """Inspect 'config.hg.use_git', and if True, remove all packages from 'hg.packages'
     and add corresponding hg:: URLs to "git.url.overrides" instead."""
     if not config.hg.use_git:
-        return
+        raise NotImplementedError("Direct hg support is not fully implemented; please use git-remote-hg.")
     while config.hg.packages:
         pkg = config.hg.packages.pop()
-        url = get_url(config, pkg)
-        config.git.url.overrides[pkg] = "hg::" + url
+        remotes = get_remotes(config, pkg)
+        for k in remotes:
+            remotes[k] = "hg::" + remotes[k]
+        config.git.url.overrides[pkg] = remotes
