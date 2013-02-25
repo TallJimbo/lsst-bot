@@ -29,7 +29,7 @@ def maybe_use_git(config):
     """Inspect 'config.hg.use_git', and if True, remove all packages from 'hg.packages'
     and add corresponding hg:: URLs to "git.url.overrides" instead."""
     if not config.hg.use_git:
-        raise NotImplementedError("Direct hg support is not fully implemented; please use git-remote-hg.")
+        return
     while config.hg.packages:
         pkg = config.hg.packages.pop()
         remotes = get_remotes(config, pkg)
