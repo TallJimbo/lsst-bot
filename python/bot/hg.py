@@ -27,12 +27,12 @@ def run(config, path, *args):
 
 def maybe_use_git(config):
     """Inspect 'config.hg.use_git', and if True, remove all packages from 'hg.packages'
-    and add corresponding hg:: URLs to "git.url.overrides" instead."""
+    and add corresponding gitifyhg:: URLs to "git.url.overrides" instead."""
     if not config.hg.use_git:
         return
     while config.hg.packages:
         pkg = config.hg.packages.pop()
         remotes = get_remotes(config, pkg)
         for k in remotes:
-            remotes[k] = "hg::" + remotes[k]
+            remotes[k] = "gitifyhg::" + remotes[k]
         config.git.url.overrides[pkg] = remotes
