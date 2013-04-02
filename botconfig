@@ -58,7 +58,7 @@ hg.echo = logging.INFO
 hg.refs.replace = {"master": "default"}
 
 # Packages that use hg instead of git.
-hg.packages = set(["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip",
+hg.packages = set(["hscAstrom", "distEst", "hscPipe", "hscMosaic", "solvetansip", "runOnsite",
                    "hscPipeBase", "meas_extensions_shapeMiyatake", "fitsthumb"])
 
 # Use git-remote-hg to manage hg packages instead of hg itself.
