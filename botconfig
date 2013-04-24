@@ -16,7 +16,6 @@ git.url.remotes = {"NCSA": LSST_DMS, "mitaka": HSC_GIT}
 # Dictionary of per-package overrides; each value must either be a dict that overrides git.url.remotes
 # for that package, or a string that overrides {pkg} for that package when used in a git URL.
 git.url.overrides = {
-    "meas_mosaic": {"NCSA": LSST_CONTRIB, "mitaka": HSC_GIT},
     "sconsUtils": "devenv/sconsUtils"
 }
 
