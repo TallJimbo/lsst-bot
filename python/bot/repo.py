@@ -335,10 +335,10 @@ class RepoSet(object):
                     logging.info("Not fetching manual package '{pkg}'".format(pkg=pkg))
                 elif pkg in self.config.hg.packages:
                     logging.info("Fetching (but not merging) from hg '{pkg}'.".format(pkg=pkg))
-                    hg.run(self.config, self.path(pkg), "pull")                    
+                    hg.run(self.config, self.path(pkg), "pull")
                 else:
                     logging.info("Fetching (but not merging) from git '{pkg}'.".format(pkg=pkg))
-                    git.run(self.config, self.path(pkg), "fetch " + self.config.remote.origin)
+                    git.run(self.config, self.path(pkg), "fetch", self.config.git.origin)
             if manual_are_new:
                 new_clones.add(pkg)
         else:
