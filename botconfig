@@ -11,7 +11,7 @@ HSC_GIT = "ssh://mitaka/ana/lsstrepo/{pkg}.git"
 HSC_HG = "ssh://mitaka//ana/hgrepo/{pkg}"
 
 # Package URL templates for git remotes
-git.url.remotes = {"NCSA": LSST_DMS, "mitaka": HSC_GIT}
+git.url.remotes = {"LSST": LSST_DMS, "HSC": HSC_GIT}
 
 # Dictionary of per-package overrides; each value must either be a dict that overrides git.url.remotes
 # for that package, or a string that overrides {pkg} for that package when used in a git URL.
@@ -20,7 +20,7 @@ git.url.overrides = {
 }
 
 # Which remote to clone from (it will be renamed from 'origin' to the name used here)
-git.origin = "NCSA"
+git.origin = "LSST"
 
 # Redirect git output to these buffers
 git.stderr = sys.stderr
