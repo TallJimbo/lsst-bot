@@ -11,7 +11,7 @@ HSC_GIT = "ssh://mitaka/ana/lsstrepo/{pkg}.git"
 HSC_HG = "ssh://mitaka//ana/hgrepo/{pkg}"
 
 # Package URL templates for git remotes
-git.url.remotes = {"LSST": LSST_DMS, "HSC": HSC_GIT}
+git.url.remotes = {"LSST": LSST_DMS, "HSC-GitHub": HSC_GIT}
 
 # Dictionary of per-package overrides; each value must either be a dict that overrides git.url.remotes
 # for that package, or a string that overrides {pkg} for that package when used in a git URL.
