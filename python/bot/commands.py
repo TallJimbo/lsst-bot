@@ -160,28 +160,6 @@ class GitCommand(BatchCommand):
         self.repos.read_list()
         self.repos.run_git(*args.git_args, **self.kw(args))
 
-class HgCommand(BatchCommand):
-    """Run an hg command on all (non-manual) managed packages.
-
-    The special string {pkg} in the additional arguments to hg will
-    be replaced with the package name.
-    """
-
-    name = "hg"
-
-    def setup(self, parser):
-        BatchCommand.setup(self, parser)
-        parser.add_argument("path", metavar="PATH", type=str,
-                            help="directory that contains managed repositories.  "
-                            "This is mandatory to distinguish it from hg arguments.")
-        parser.add_argument("hg_args", metavar="HG_ARGS", nargs=argparse.REMAINDER, 
-                            help="additional arguments and options will be passed to hg")
-
-    def run(self, args):
-        Command.run(self, args)
-        self.repos.read_list()
-        self.repos.run_hg(*args.hg_args, **self.kw(args))
-
 class SimpleCommand(Command):
 
     def setup(self, parser):

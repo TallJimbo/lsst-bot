@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from . import git
-from . import hg
 from . import eups
 from . import scons
 from . import config
@@ -15,7 +14,6 @@ class RepoSet(object):
 
     def __init__(self, cfg):
         self.config = cfg
-        hg.maybe_use_git(self.config)
         self.packages = None
         self.refs = None
         self.external = None
@@ -151,7 +149,7 @@ class RepoSet(object):
                 logging.info("Skipping inherited package '{pkg}'...".format(pkg=pkg))
 
     def run_git(self, *args, **kw):
-        """Run the same git command on each package, excluding 'manual' and hg-controlled packages.
+        """Run the same git command on each package, excluding 'manual' packages.
         """
         assert self.packages is not None
         assert self.refs is not None
@@ -160,38 +158,12 @@ class RepoSet(object):
             ref = self.refs[pkg]
             if ref is None:
                 logging.info("Skipping package '{pkg}' with ref==None...".format(pkg=pkg))
-            elif pkg in self.config.hg.packages:
-                logging.info("Skipping hg package '{pkg}'...".format(pkg=pkg))
             elif pkg not in self.inherited or kw.get("inherited"):
                 logging.info("Processing '{pkg}'...".format(pkg=pkg))
                 expanded = [arg.format(pkg=pkg, ref=ref) for arg in args]
                 try:
                     git.run(self.config, self.path(pkg), *expanded)
                 except git.Error as err:
-                    if kw.get("ignore_failed"):
-                        logging.info("Failure on '{pkg}'; continuing...".format(pkg=pkg))
-                    else:
-                        raise err
-            else:
-                logging.info("Skipping inherited package '{pkg}'...".format(pkg=pkg))
-
-    def run_hg(self, *args, **kw):
-        """Run the same hg command on each hg-controlled package.
-        """
-        assert self.packages is not None
-        assert self.refs is not None
-        assert self.inherited is not None
-        for pkg in self.packages:
-            if self.refs[pkg] is None:
-                logging.info("Skipping package '{pkg}' with ref==None...".format(pkg=pkg))
-            elif pkg not in self.config.hg.packages:
-                logging.info("Skipping git package '{pkg}'...".format(pkg=pkg))
-            elif pkg not in self.inherited or kw.get("inherited"):
-                logging.info("Processing '{pkg}'...".format(pkg=pkg))
-                expanded = [arg.format(pkg=pkg) for arg in args]
-                try:
-                    hg.run(self.config, self.path(pkg), *expanded)
-                except hg.Error as err:
                     if kw.get("ignore_failed"):
                         logging.info("Failure on '{pkg}'; continuing...".format(pkg=pkg))
                     else:
@@ -227,11 +199,11 @@ class RepoSet(object):
                 eups.tag(pkg, version, tag)
 
     def sync(self, fetch=False, declare=True, write_table=True, write_list=True, manual_are_new=False):
-        """Clone and/or checkout git and/or hg repositories to match the package list defined
+        """Clone and/or checkout git repositories to match the package list defined
         by the configuration, and declare them to EUPS and write the
         EUPS metapackage table file.
 
-        If fetch is True, run 'git fetch' or 'hg pull' on repos to ensure we have access to the
+        If fetch is True, run 'git fetch' on repos to ensure we have access to the
         branches/tags we need before trying to check them out (only applies when
         an existing repo is found).
 
@@ -256,7 +228,7 @@ class RepoSet(object):
             if pkg in done:
                 continue
             done.add(pkg)
-            # clone or fetch the git/hg repo as needed
+            # clone or fetch the git repo as needed
             if not self._ensure_repo(pkg, fetch, new_clones, manual_are_new=manual_are_new):
                 if pkg in dependencies:
                     del dependencies[pkg]
@@ -310,13 +282,12 @@ class RepoSet(object):
         new_clones -= self.inherited
         # add remotes in any new clones (including rename of origin)
         for pkg in new_clones:
-            if pkg not in self.config.hg.packages:
-                logging.info("Adding remotes for '{pkg}'.".format(pkg=pkg))
-                for k, v in git.get_remotes(self.config, pkg).iteritems():
-                    if k == self.config.git.origin:
-                        git.run(self.config, self.path(pkg), "remote", "rename", "origin", k)
-                    else:
-                        git.run(self.config, self.path(pkg), "remote", "add", k, v)
+            logging.info("Adding remotes for '{pkg}'.".format(pkg=pkg))
+            for k, v in git.get_remotes(self.config, pkg).iteritems():
+                if k == self.config.git.origin:
+                    git.run(self.config, self.path(pkg), "remote", "rename", "origin", k)
+                else:
+                    git.run(self.config, self.path(pkg), "remote", "add", k, v)
         # make a dict of unmanaged packages, where value is True if it's required
         self.external = dict((pkg, pkg in required) for pkg in external)
         # other optional tasks
@@ -325,7 +296,7 @@ class RepoSet(object):
         if write_list: self.write_list()
 
     def _ensure_repo(self, pkg, fetch, new_clones, inherit=True, manual_are_new=False):
-        """Worker function for sync - clones a git/hg repo as needed and optionally fetches
+        """Worker function for sync - clones a git repo as needed and optionally fetches
         new changes from the origin remote if one is already present.
         """
         if os.path.isdir(self.path(pkg)):
@@ -333,9 +304,6 @@ class RepoSet(object):
                 assert pkg not in self.inherited 
                 if self.config.packages.refs.overrides.get(pkg, False) is None:
                     logging.info("Not fetching manual package '{pkg}'".format(pkg=pkg))
-                elif pkg in self.config.hg.packages:
-                    logging.info("Fetching (but not merging) from hg '{pkg}'.".format(pkg=pkg))
-                    hg.run(self.config, self.path(pkg), "pull")
                 else:
                     logging.info("Fetching (but not merging) from git '{pkg}'.".format(pkg=pkg))
                     git.run(self.config, self.path(pkg), "fetch", self.config.git.origin)
@@ -357,15 +325,6 @@ class RepoSet(object):
             if ref is None:
                 logging.info("Unmanaged source for '{pkg}' not found; treating as external.".format(pkg=pkg))
                 return False
-            if pkg in self.config.packages.hg:
-                logging.info("Cloning '{pkg}' with hg.".format(pkg=pkg))
-                hg_url = hg.get_remotes(self.config, pkg)[self.config.hg.origin]
-                try:
-                    hg.run(self.config, self.config.path, "clone", hg_url)
-                    new_clones.add(pkg)
-                except hg.Error:
-                    logging.info("hg repo at '{0}' not found; treating as external.".format(hg_url))
-                    return False
             else:
                 reference = None
                 if self.config.git.reference is not None:
@@ -395,34 +354,17 @@ class RepoSet(object):
         if ref:
             trueref = ref
             # let exceptions propagate up; we don't want to fall back if the ref is in overrides
-            if pkg in self.config.hg.packages:
-                hgref = self.config.hg.refs.replace.get(ref, ref)
-                logging.debug("Trying to checkout ref '{hgref}' for '{pkg}'.".format(hgref=hgref, pkg=pkg))
-                hg.run(self.config, self.path(pkg), "update", hgref)
-                trueref = hgref
-            else:
-                logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
-                git.run(self.config, self.path(pkg), "checkout", ref)
+            logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
+            git.run(self.config, self.path(pkg), "checkout", ref)
         elif ref is False:  # don't want to match 'ref is None' here
             for ref in self.config.packages.refs.default:
                 trueref = ref
-                if pkg in self.config.hg.packages:
-                    hgref = self.config.hg.refs.replace.get(ref, ref)
-                    logging.debug("Trying to checkout ref '{hgref}' for '{pkg}'."
-                                  .format(hgref=hgref, pkg=pkg))
-                    try:
-                        hg.run(self.config, self.path(pkg), "update", hgref)
-                        trueref = hgref
-                        break
-                    except hg.Error:
-                        pass
-                else:
-                    logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
-                    try:
-                        git.run(self.config, self.path(pkg), "checkout", ref)
-                        break
-                    except git.Error:
-                        pass
+                logging.debug("Trying to checkout ref '{ref}' for '{pkg}'.".format(ref=ref, pkg=pkg))
+                try:
+                    git.run(self.config, self.path(pkg), "checkout", ref)
+                    break
+                except git.Error:
+                    pass
             else:
                 raise RuntimeError(
                     "Could not checkout any of ({refs}) for package '{pkg}'".format(
