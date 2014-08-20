@@ -195,8 +195,7 @@ class CleanCommand(Command):
                 else:
                     os.remove(p2)
 
-commands = [InitCommand(), SyncCommand(), BuildCommand(), InstallCommand(), GitCommand(), HgCommand(),
-            CleanCommand()]
+commands = [InitCommand(), SyncCommand(), BuildCommand(), InstallCommand(), GitCommand(), CleanCommand()]
 
 def addSimpleCommand(name):
     cmd = type(name, (SimpleCommand,), {"name": name, "__doc__": getattr(repo.RepoSet, name).__doc__})
