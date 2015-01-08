@@ -36,7 +36,7 @@ def main(argv):
     tableFile = os.path.join(args.buildFiles, "%s.table" % args.name)
     extrasDir = os.path.join(args.buildFiles, args.name)
     if not os.path.isfile(tableFile):
-        tableFile = None
+        tableFile = 'none'
     else:
         tableFile = open(tableFile, 'r')
     if not os.path.isdir(extrasDir):
