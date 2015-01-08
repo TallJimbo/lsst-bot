@@ -3,8 +3,17 @@
 import os
 import re
 import sys
+import subprocess
 import argparse
 import eups
+
+def findDir(relatives):
+    for eupsPath in os.environ["EUPS_PATH"].split(":"):
+        for subPath in ("../external", "external"):
+            result = os.path.join(eupsPath, subPath)
+            if os.path.isdir(result):
+                return result
+    return None
 
 def main(argv):
     parser = argparse.ArgumentParser(
@@ -18,23 +27,37 @@ def main(argv):
     parser.add_argument("--buildFiles", metavar="DIR", type=str,
                         help="Full path to a local clone of the 'buildFiles' package",
                         default=None)
+    parser.add_argument("--external", metavar="DIR", type=str,
+                        help="Path where LSST external package repositories should be cloned")
+    parser.add_argument("--external-url", metavar="URL", type=str,
+                        default="git@git.lsstcorp.org:LSST/external",
+                        help="Root URL for LSST external package git repositories")
     parser.add_argument("--productDir", "-r", metavar="DIR", help="directory to associate with the product",
                         default='none')
     args = parser.parse_args(argv)
 
-    if args.buildFiles is None:
-        for eupsPath in os.environ["EUPS_PATH"].split(":"):
-            for subPath in ("../buildFiles", "../devenv/buildFiles", "buildFiles", "devenv/buildFiles"):
-                args.buildFiles = os.path.join(eupsPath, subPath)
-                if os.path.isdir(args.buildFiles):
-                    print "Using buildFiles at %s" % args.buildFiles
-                    break
-                args.buildFiles = None
-    if args.buildFiles is None:
-        parser.error("--buildFiles must be specified, or present in or just above EUPS_PATH")
+    if args.external is None and args.buildFiles is None:
+        args.external = findDir(["../external", "external"])
+        if args.external is None:
+            args.buildFiles = findDir(["../buildFiles", "../devenv/buildFiles",
+                                       "buildFiles", "devenv/buildFiles"])
+            if args.buildFiles is None:
+                parser.error("--external or --buildFiles must be specified, or present in "
+                             "or just above EUPS_PATH")
+    if args.external is not None and args.buildFiles is not None:
+        parser.error("Only one of --external and --buildFiles may be specified")
 
-    tableFile = os.path.join(args.buildFiles, "%s.table" % args.name)
-    extrasDir = os.path.join(args.buildFiles, args.name)
+    if args.external is not None:
+        externalRepo = os.path.join(args.external, args.name)
+        if not os.path.isdir(externalRepo):
+            externalUrl = "%s/%s.git" % (args.external_url, args.name)
+            print "Cloning external git repo from %s" % externalUrl
+            subprocess.check_call(("git", "clone", externalUrl, externalRepo))
+        tableFile = os.path.join(externalRepo, "ups", "%s.table" % args.name)
+        extrasDir = os.path.join(externalRepo, "ups")
+    else:
+        tableFile = os.path.join(args.buildFiles, "%s.table" % args.name)
+        extrasDir = os.path.join(args.buildFiles, args.name)
     if not os.path.isfile(tableFile):
         tableFile = 'none'
     else:
@@ -42,7 +65,8 @@ def main(argv):
     if not os.path.isdir(extrasDir):
         extraFiles = []
     else:
-        extraFiles = [(os.path.join(extrasDir, f), f) for f in os.listdir(extrasDir)]
+        extraFiles = [(os.path.join(extrasDir, f), f) for f in os.listdir(extrasDir)
+                      if not f.endswith("table") and f != "eupspkg.cfg.sh"]
     print ("Declaring %s %s with productDir %s and %d extra files"
            % (args.name, args.version, args.productDir, len(extraFiles)))
     eups.declare(productName=args.name, versionName=args.version, productDir=args.productDir,
