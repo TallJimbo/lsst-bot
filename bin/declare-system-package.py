@@ -30,7 +30,7 @@ def main(argv):
     parser.add_argument("--external", metavar="DIR", type=str,
                         help="Path where LSST external package repositories should be cloned")
     parser.add_argument("--external-url", metavar="URL", type=str,
-                        default="git@git.lsstcorp.org:LSST/external",
+                        default="git://dev.lsstcorp.org/LSST/external",
                         help="Root URL for LSST external package git repositories")
     parser.add_argument("--productDir", "-r", metavar="DIR", help="directory to associate with the product",
                         default='none')
