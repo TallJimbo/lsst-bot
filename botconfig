@@ -4,8 +4,8 @@ import os
 import sys
 import logging
 
-LSST_DMS = "git@git.lsstcorp.org:LSST/DMS/{pkg}.git"
-LSST_CONTRIB = "git@git.lsstcorp.org:contrib/{pkg}.git"
+LSST_DMS = "git@github.com:LSST/{pkg}.git"
+LSST_CONTRIB = "git@github.lsstcorp.org:contrib/{pkg}.git"
 
 NAOJ_GIT = "ssh://naoj-git//home/gituser/repositories/{pkg}.git"
 
@@ -14,9 +14,7 @@ git.url.remotes = {"LSST": LSST_DMS, "NAOJ": NAOJ_GIT}
 
 # Dictionary of per-package overrides; each value must either be a dict that overrides git.url.remotes
 # for that package, or a string that overrides {pkg} for that package when used in a git URL.
-git.url.overrides = {
-    "sconsUtils": "devenv/sconsUtils"
-}
+git.url.overrides = {}
 
 # Which remote to clone from (it will be renamed from 'origin' to the name used here)
 git.origin = "LSST"
@@ -45,7 +43,7 @@ packages.external = set(["boost", "scons", "doxygen", "python", "numpy", "mysqlp
                          "minuit2", "gsl", "fftw", "pyfits", "cuda_toolkit", "pysqlite", "astrometry_net",
                          "astrometry_net_data", "suprime_data", "testdata_subaru", "pbasf2", "scisql",
                          "scipy", "libpng", "libjpeg", "psycopg2", "pg8000", "condor", "condor_glidein",
-                         "nlopt", "afwdata", "healpy", "psfex"])
+                         "nlopt", "afwdata", "healpy", "psfex", "GalSim", "tmv"])
 
 # Git refs (branches, tags, SHAs, etc.) to use for packages without an explicit override.
 # These will be tried in order; if we can't checkout the first, we fall back to the second, etc.
