@@ -4,13 +4,11 @@ import os
 import sys
 import logging
 
-LSST_DMS = "git@github.com:LSST/{pkg}.git"
-LSST_CONTRIB = "git@github.lsstcorp.org:contrib/{pkg}.git"
-
+LSST_GIT = "git@github.com:LSST/{pkg}.git"
 NAOJ_GIT = "ssh://naoj-git//home/gituser/repositories/{pkg}.git"
 
 # Package URL templates for git remotes
-git.url.remotes = {"LSST": LSST_DMS, "NAOJ": NAOJ_GIT}
+git.url.remotes = {"LSST": LSST_GIT, "NAOJ": NAOJ_GIT}
 
 # Dictionary of per-package overrides; each value must either be a dict that overrides git.url.remotes
 # for that package, or a string that overrides {pkg} for that package when used in a git URL.
